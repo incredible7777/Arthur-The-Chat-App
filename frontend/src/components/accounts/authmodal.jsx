@@ -60,7 +60,7 @@ const AuthModal = () => {
       loginSuccess(data.token, data.user);
     } catch (err) {
       setError("Failed to enter Guest Mode. Please try again.");
-    } finally {
+    } fontally {
       setGuestLoading(false);
     }
   };

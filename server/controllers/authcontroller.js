@@ -33,24 +33,13 @@ export const sendOtp = async (req, res) => {
       otpHash,
     });
 
-    // Send email with 6-second strict timeout race to PREVENT UI hanging forever!
-    try {
-      const emailPromise = sendOtpEmail(cleanEmail, otpCode);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Email delivery timed out after 6 seconds")), 6000)
-      );
+    // Send the email directly to recipient Gmail inbox
+    await sendOtpEmail(cleanEmail, otpCode);
+    console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
 
-      await Promise.race([emailPromise, timeoutPromise]);
-      console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
-    } catch (mailError) {
-      console.error("⚠️ Nodemailer Email Warning:", mailError.message);
-      console.log(`🔑 [OTP CREATED IN DB] for ${cleanEmail}: ${otpCode}`);
-    }
-
-    // ALWAYS return success so UI instantly advances to 6-digit OTP input step!
     return res.status(200).json({
       success: true,
-      message: `OTP code sent to ${cleanEmail}`,
+      message: `OTP sent successfully to ${cleanEmail}`,
     });
   } catch (error) {
     console.error("Error in sendOtp:", error);
