@@ -2,17 +2,9 @@ import { io } from "socket.io-client";
 
 let socket = null;
 
-const getSocketURL = () => {
-  if (process.env.REACT_APP_SOCKET_URL) return process.env.REACT_APP_SOCKET_URL;
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    return "https://arthur-backend-wilm.onrender.com";
-  }
-  return "http://localhost:8080";
-};
-
 export const connectSocket = (token) => {
   if (!socket) {
-    const socketUrl = getSocketURL();
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
 
     socket = io(socketUrl, {
       auth: {
@@ -22,7 +14,7 @@ export const connectSocket = (token) => {
     });
 
     socket.on("connect", () => {
-      console.log(" Connected to ChatApp Socket server at:", socketUrl, "ID:", socket.id);
+      console.log(" Connected to ChatApp Socket server with ID:", socket.id);
     });
 
     socket.on("connect_error", (err) => {
