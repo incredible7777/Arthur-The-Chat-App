@@ -3,13 +3,16 @@ const rateLimitStore = new Map();
 
 /**
  * Custom zero-dependency Rate Limiter middleware
+ * Keyed by user email or IP to prevent shared cloud proxy (Render/Vercel) IP lockouts
  */
 const createRateLimiter = ({ windowMs, max, message }) => {
   return (req, res, next) => {
-    const ip = req.ip || req.headers["x-forwarded-for"] || "127.0.0.1";
-    const now = Date.now();
+    const emailKey = req.body && req.body.email ? String(req.body.email).toLowerCase().trim() : null;
+    const ipKey = req.ip || (req.headers["x-forwarded-for"] ? String(req.headers["x-forwarded-for"]).split(",")[0] : "127.0.0.1");
+    const identifier = emailKey || ipKey;
 
-    const record = rateLimitStore.get(ip) || { count: 0, resetTime: now + windowMs };
+    const now = Date.now();
+    const record = rateLimitStore.get(identifier) || { count: 0, resetTime: now + windowMs };
 
     if (now > record.resetTime) {
       record.count = 0;
@@ -17,7 +20,7 @@ const createRateLimiter = ({ windowMs, max, message }) => {
     }
 
     record.count += 1;
-    rateLimitStore.set(ip, record);
+    rateLimitStore.set(identifier, record);
 
     if (record.count > max) {
       return res.status(429).json({ message });
@@ -29,12 +32,12 @@ const createRateLimiter = ({ windowMs, max, message }) => {
 
 export const otpRequestLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
-  message: "Too many OTP requests from this IP. Please try again after 15 minutes.",
+  max: 30,
+  message: "Too many OTP requests for this email. Please try again after a few minutes.",
 });
 
 export const otpVerifyLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15,
-  message: "Too many verification attempts. Please try again after 15 minutes.",
+  max: 30,
+  message: "Too many verification attempts. Please try again after a few minutes.",
 });
