@@ -4,7 +4,9 @@ let socket = null;
 
 export const connectSocket = (token) => {
   if (!socket) {
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || (isLocal ? "http://localhost:8080" : "https://arthur-backend-wilm.onrender.com");
+
     socket = io(socketUrl, {
       auth: {
         token: token,
