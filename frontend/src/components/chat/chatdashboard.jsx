@@ -331,7 +331,7 @@ const ChatDashboard = () => {
   };
 
   return (
-    <div className="w-screen h-[100dvh] flex overflow-hidden bg-[#0B0E14]">
+    <div className="fixed inset-0 w-full h-[100dvh] flex overflow-hidden bg-[#0B0E14]">
       {/* Sidebar */}
       <div className={`w-full md:w-80 h-full ${activeChat ? "hidden md:flex" : "flex"}`}>
         <Sidebar

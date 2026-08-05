@@ -51,6 +51,7 @@ const ChatArea = ({
   const [showSearch, setShowSearch] = useState(false);
   const [showPinnedDropdown, setShowPinnedDropdown] = useState(false);
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
+  const [activeMobileActionMsgId, setActiveMobileActionMsgId] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const docInputRef = useRef(null);
@@ -174,14 +175,15 @@ const ChatArea = ({
     <div className="w-full h-full flex flex-col bg-[#0B0E14] relative overflow-hidden">
       
       {/* ----------------- TOP ACTIVE CHAT HEADER ----------------- */}
-      <div className="p-3.5 px-6 bg-[#121722] border-b border-[#1E2638] flex items-center justify-between z-10">
+      <div className="p-3.5 px-4 sm:px-6 bg-[#121722] border-b border-[#1E2638] flex items-center justify-between z-10 flex-shrink-0">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg bg-[#171E2C] border border-[#232D42] cursor-pointer"
+              className="md:hidden p-2 text-slate-300 hover:text-white rounded-xl bg-[#171E2C] border border-[#232D42] cursor-pointer touch-manipulation"
+              title="Back to contacts"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
           )}
 
@@ -191,7 +193,7 @@ const ChatArea = ({
             className="flex items-center gap-3 cursor-pointer group"
           >
             <div className="relative">
-              <img src={activeChat.avatar} alt={activeChat.username} className="w-9 h-9 rounded-full border border-slate-700 group-hover:border-blue-500 transition-colors object-cover" />
+              <img src={activeChat.avatar} alt={activeChat.username} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-700 group-hover:border-blue-500 transition-colors object-cover" />
               <span
                 className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#121722] ${
                   activeChat.isOnline ? "bg-emerald-500" : "bg-slate-600"
@@ -199,7 +201,7 @@ const ChatArea = ({
               />
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">{activeChat.username}</h3>
+              <h3 className="text-xs sm:text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{activeChat.username}</h3>
               <p className="text-[11px] text-slate-400">
                 {isTyping ? (
                   <span className="text-blue-400 font-medium flex items-center gap-1 animate-pulse">
@@ -220,11 +222,11 @@ const ChatArea = ({
           <button
             onClick={() => setShowSearch(!showSearch)}
             title="Search Messages"
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`p-2 rounded-xl border transition-colors cursor-pointer touch-manipulation ${
               showSearch ? "bg-blue-600/20 text-blue-400 border-blue-500/40" : "text-slate-400 hover:text-white bg-[#171E2C] border-[#232D42]"
             }`}
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Report User Button */}
@@ -232,9 +234,9 @@ const ChatArea = ({
             <button
               onClick={() => onReportUser(activeChat)}
               title="Report User"
-              className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg bg-[#171E2C] border border-[#232D42] transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-xl bg-[#171E2C] border border-[#232D42] transition-colors cursor-pointer touch-manipulation"
             >
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>
@@ -242,19 +244,19 @@ const ChatArea = ({
 
       {/* ----------------- SEARCH BAR (WHEN TOGGLED) ----------------- */}
       {showSearch && (
-        <div className="bg-[#141A28] border-b border-[#1E2638] p-2.5 px-6 flex items-center gap-3 animate-fadeIn">
+        <div className="bg-[#141A28] border-b border-[#1E2638] p-2.5 px-4 sm:px-6 flex items-center gap-3 animate-fadeIn flex-shrink-0">
           <Search className="w-4 h-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search messages in this chat..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent text-white text-xs outline-none placeholder:text-slate-500"
+            className="flex-1 bg-transparent text-white text-xs sm:text-sm outline-none placeholder:text-slate-500"
             autoFocus
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white p-1">
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -262,8 +264,8 @@ const ChatArea = ({
 
       {/* ----------------- PINNED MESSAGES HEADER & DROPDOWN ----------------- */}
       {pinnedMessages.length > 0 && (
-        <div className="bg-[#151D2C] border-b border-[#222E44] transition-all">
-          <div className="px-6 py-2 flex items-center justify-between text-xs">
+        <div className="bg-[#151D2C] border-b border-[#222E44] transition-all flex-shrink-0">
+          <div className="px-4 sm:px-6 py-2 flex items-center justify-between text-xs">
             <div
               onClick={() => scrollToMessage(pinnedMessages[pinnedMessages.length - 1]._id)}
               className="flex items-center gap-2 text-slate-300 truncate flex-1 cursor-pointer hover:text-amber-300 transition-colors"
@@ -276,7 +278,7 @@ const ChatArea = ({
             <button
               onClick={() => setShowPinnedDropdown(!showPinnedDropdown)}
               title="Expand all pinned messages"
-              className="text-slate-400 hover:text-white p-1 ml-2 cursor-pointer flex items-center gap-1 font-medium"
+              className="text-slate-400 hover:text-white p-1.5 ml-2 cursor-pointer flex items-center gap-1 font-medium touch-manipulation"
             >
               {showPinnedDropdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
@@ -284,7 +286,7 @@ const ChatArea = ({
 
           {/* Expanded Full List of Pinned Messages */}
           {showPinnedDropdown && (
-            <div className="px-6 pb-3 pt-1 space-y-2 border-t border-[#222E44]/60 max-h-48 overflow-y-auto">
+            <div className="px-4 sm:px-6 pb-3 pt-1 space-y-2 border-t border-[#222E44]/60 max-h-48 overflow-y-auto">
               {pinnedMessages.map((pm) => (
                 <div
                   key={pm._id}
@@ -303,17 +305,20 @@ const ChatArea = ({
 
                   <div className="flex items-center gap-2 ml-2">
                     <button
-                      onClick={() => scrollToMessage(pm._id)}
-                      className="px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] transition-colors cursor-pointer"
+                      onClick={() => {
+                        scrollToMessage(pm._id);
+                        setShowPinnedDropdown(false);
+                      }}
+                      className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white text-[11px] font-medium transition-colors cursor-pointer touch-manipulation"
                     >
-                      Jump to
+                      Jump
                     </button>
                     <button
                       onClick={() => onTogglePinMessage(pm._id)}
                       title="Unpin"
-                      className="p-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer touch-manipulation"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -324,7 +329,7 @@ const ChatArea = ({
       )}
 
       {/* ----------------- MESSAGES CONTAINER ----------------- */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
         {filteredMessages.length === 0 ? (
           <div className="text-center py-12 text-slate-500 text-xs">
             {searchQuery ? "No messages found matching your search." : "No messages yet. Send a wave to say hello!"}
@@ -335,6 +340,7 @@ const ChatArea = ({
             const currentUserId = typeof currentUser === "object" ? currentUser?._id || currentUser?.id : currentUser;
             const isMe = String(senderId) === String(currentUserId);
             const isHighlighted = highlightedMsgId === m._id;
+            const isMobileActionOpen = activeMobileActionMsgId === m._id;
 
             return (
               <div
@@ -344,7 +350,8 @@ const ChatArea = ({
               >
                 {/* Message Bubble Container */}
                 <div
-                  className={`relative max-w-[85%] sm:max-w-[70%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm transition-all ${
+                  onClick={() => setActiveMobileActionMsgId(isMobileActionOpen ? null : m._id)}
+                  className={`relative max-w-[88%] sm:max-w-[70%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm transition-all cursor-pointer ${
                     isHighlighted ? "ring-2 ring-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.5)] scale-[1.02]" : ""
                   } ${
                     m.isDeleted
@@ -361,31 +368,39 @@ const ChatArea = ({
                     </div>
                   )}
 
-                  {/* Unsend Action & Emoji Reaction Bar on Hover (Works for ALL messages!) */}
+                  {/* Reaction / Pin / Unsend Action Bar (Visible on Hover OR Mobile Tap!) */}
                   {!m.isDeleted && (
                     <div
-                      className={`absolute top-0 -translate-y-full mb-1 flex items-center gap-1 bg-[#121722] border border-[#232D42] p-1 rounded-xl shadow-xl z-20 opacity-0 group-hover:opacity-100 transition-opacity ${
-                        isMe ? "right-0" : "left-0"
-                      }`}
+                      className={`absolute top-0 -translate-y-full mb-1 flex items-center gap-1 bg-[#121722] border border-[#232D42] p-1 rounded-xl shadow-xl z-20 transition-opacity ${
+                        isMobileActionOpen ? "opacity-100 pointer-events-auto" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+                      } ${isMe ? "right-0" : "left-0"}`}
                     >
                       {/* Emoji Quick Picker */}
                       {QUICK_EMOJIS.map((emoji) => (
                         <button
                           key={emoji}
                           type="button"
-                          onClick={() => onToggleReaction(m._id, emoji)}
-                          className="hover:scale-125 transition-transform p-1 cursor-pointer text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleReaction(m._id, emoji);
+                            setActiveMobileActionMsgId(null);
+                          }}
+                          className="hover:scale-125 transition-transform p-1.5 cursor-pointer text-xs sm:text-sm touch-manipulation"
                         >
                           {emoji}
                         </button>
                       ))}
 
-                      {/* Pin Toggle Action (Works for ALL messages!) */}
+                      {/* Pin Toggle Action */}
                       <button
                         type="button"
-                        onClick={() => onTogglePinMessage(m._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTogglePinMessage(m._id);
+                          setActiveMobileActionMsgId(null);
+                        }}
                         title={m.isPinned ? "Unpin Message" : "Pin Message"}
-                        className={`p-1 rounded hover:bg-slate-800 transition-colors cursor-pointer ${
+                        className={`p-1.5 rounded hover:bg-slate-800 transition-colors cursor-pointer touch-manipulation ${
                           m.isPinned ? "text-amber-400" : "text-slate-400 hover:text-white"
                         }`}
                       >
@@ -396,13 +411,15 @@ const ChatArea = ({
                       {isMe && (
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (window.confirm("Unsend this message for everyone?")) {
                               onUnsendMessage(m._id);
+                              setActiveMobileActionMsgId(null);
                             }
                           }}
                           title="Unsend Message"
-                          className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors cursor-pointer touch-manipulation"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -416,7 +433,10 @@ const ChatArea = ({
                       <img
                         src={m.image}
                         alt="Attachment"
-                        onClick={() => setPreviewModalImage(m.image)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewModalImage(m.image);
+                        }}
                         className="max-h-60 w-full object-cover rounded-xl hover:opacity-95 transition-opacity"
                       />
                     </div>
@@ -438,7 +458,8 @@ const ChatArea = ({
                       <a
                         href={m.fileUrl}
                         download={m.fileName || "attachment"}
-                        className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex-shrink-0 touch-manipulation"
                         title="Download File"
                       >
                         <Download className="w-4 h-4" />
@@ -492,7 +513,7 @@ const ChatArea = ({
 
       {/* ----------------- PREVIEW ATTACHMENT BAR BEFORE SENDING ----------------- */}
       {(selectedImage || selectedFile) && (
-        <div className="px-6 py-2 bg-[#121722] border-t border-[#1E2638] flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-2 bg-[#121722] border-t border-[#1E2638] flex items-center justify-between flex-shrink-0">
           {selectedImage ? (
             <div className="flex items-center gap-3">
               <img src={selectedImage} alt="Preview" className="w-10 h-10 object-cover rounded-lg border border-slate-700" />
@@ -513,21 +534,21 @@ const ChatArea = ({
               setSelectedImage(null);
               setSelectedFile(null);
             }}
-            className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors touch-manipulation"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* ----------------- CHAT INPUT FORM ----------------- */}
-      <form onSubmit={handleSubmit} className="p-4 bg-[#121722] border-t border-[#1E2638] flex items-center gap-3">
+      {/* ----------------- CHAT INPUT FORM (OPTIMIZED FOR MOBILE TOUCH & KEYBOARD) ----------------- */}
+      <form onSubmit={handleSubmit} className="p-3 sm:p-4 bg-[#121722] border-t border-[#1E2638] flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Photo Upload Button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           title="Attach Image"
-          className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors cursor-pointer"
+          className="p-2 sm:p-2.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors cursor-pointer touch-manipulation"
         >
           <ImageIcon className="w-5 h-5" />
         </button>
@@ -538,28 +559,28 @@ const ChatArea = ({
           type="button"
           onClick={() => docInputRef.current?.click()}
           title="Attach Document / File"
-          className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors cursor-pointer"
+          className="p-2 sm:p-2.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors cursor-pointer touch-manipulation"
         >
           <Paperclip className="w-5 h-5" />
         </button>
         <input ref={docInputRef} type="file" accept="*" className="hidden" onChange={handleDocSelect} />
 
-        {/* Message Input Box */}
+        {/* Message Input Box (16px base font size on mobile stops unwanted browser auto-zoom!) */}
         <input
           type="text"
           placeholder={`Message ${activeChat.username}...`}
           value={text}
           onChange={handleInputChange}
-          className="flex-1 py-3 px-4 rounded-xl bg-[#171E2C] border border-[#232D42] text-white text-xs sm:text-sm outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-500"
+          className="flex-1 py-2.5 sm:py-3 px-3.5 sm:px-4 rounded-xl bg-[#171E2C] border border-[#232D42] text-white text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 placeholder:text-slate-500"
         />
 
         {/* Send Button */}
         <button
           type="submit"
           disabled={!text.trim() && !selectedImage && !selectedFile}
-          className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md transition-colors disabled:opacity-50 flex-shrink-0 cursor-pointer"
+          className="p-2.5 sm:p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md transition-colors disabled:opacity-50 flex-shrink-0 cursor-pointer touch-manipulation"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </form>
 
@@ -571,7 +592,7 @@ const ChatArea = ({
         >
           <button
             onClick={() => setPreviewModalImage(null)}
-            className="absolute top-4 right-4 p-2 bg-black/40 text-slate-300 hover:text-white rounded-full"
+            className="absolute top-4 right-4 p-2 bg-black/40 text-slate-300 hover:text-white rounded-full touch-manipulation"
           >
             <X className="w-6 h-6" />
           </button>
