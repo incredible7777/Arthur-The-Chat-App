@@ -25,7 +25,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 // Enable CORS for frontend connection
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: true,
     credentials: true,
   })
 );
@@ -44,7 +44,7 @@ app.get("/", (req, res) => {
 // Configure Socket.IO Server with CORS
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: true,
     credentials: true,
   },
 });
