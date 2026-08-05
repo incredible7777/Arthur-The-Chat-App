@@ -34,25 +34,15 @@ export const sendOtp = async (req, res) => {
     });
 
     // Send the email with raw OTP code
-    try {
-      await sendOtpEmail(cleanEmail, otpCode);
-      console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
-      return res.status(200).json({
-        success: true,
-        message: `OTP sent successfully to ${cleanEmail}`,
-      });
-    } catch (mailError) {
-      console.error("⚠️ Nodemailer Email Error:", mailError.message);
-      console.log(`🔑 [OTP FALLBACK GENERATED] for ${cleanEmail}: ${otpCode}`);
-      return res.status(200).json({
-        success: true,
-        message: `OTP Verification Code: ${otpCode}`,
-        otpCode: otpCode,
-      });
-    }
+    await sendOtpEmail(cleanEmail, otpCode);
+
+    return res.status(200).json({
+      success: true,
+      message: `OTP sent successfully to ${cleanEmail}`,
+    });
   } catch (error) {
     console.error("Error in sendOtp:", error);
-    return res.status(500).json({ message: error.message || "Failed to request OTP" });
+    return res.status(500).json({ message: error.message || "Failed to send OTP email" });
   }
 };
 
