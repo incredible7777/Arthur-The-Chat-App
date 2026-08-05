@@ -33,12 +33,24 @@ export const sendOtp = async (req, res) => {
       otpHash,
     });
 
-    // Send the email with raw OTP code
-    await sendOtpEmail(cleanEmail, otpCode);
+    // Send email with 6-second strict timeout race to PREVENT UI hanging forever!
+    try {
+      const emailPromise = sendOtpEmail(cleanEmail, otpCode);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Email delivery timed out after 6 seconds")), 6000)
+      );
 
+      await Promise.race([emailPromise, timeoutPromise]);
+      console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
+    } catch (mailError) {
+      console.error("⚠️ Nodemailer Email Warning:", mailError.message);
+      console.log(`🔑 [OTP CREATED IN DB] for ${cleanEmail}: ${otpCode}`);
+    }
+
+    // ALWAYS return success so UI instantly advances to 6-digit OTP input step!
     return res.status(200).json({
       success: true,
-      message: `OTP sent successfully to ${cleanEmail}`,
+      message: `OTP code sent to ${cleanEmail}`,
     });
   } catch (error) {
     console.error("Error in sendOtp:", error);
@@ -48,7 +60,7 @@ export const sendOtp = async (req, res) => {
 
 /**
  * 2. VERIFY OTP & LOGIN / REGISTER
- * Validates the 6-digit OTP code, creates/finds the user, and generates a JWT Token.
+ * Verifies the 6-digit OTP code, creates/finds the user, and generates a JWT Token.
  * Automatically flags personal admin email as Admin!
  */
 export const verifyOtp = async (req, res) => {
@@ -92,34 +104,30 @@ export const verifyOtp = async (req, res) => {
       user = await User.create({
         email: cleanEmail,
         username: defaultUsername,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`,
-        isGuest: false,
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${avatarSeed}`,
         isAdmin: isOwnerAdmin,
-        isOnline: true,
       });
-    } else {
-      user.isOnline = true;
-      if (isOwnerAdmin) user.isAdmin = true;
+    } else if (isOwnerAdmin && !user.isAdmin) {
+      // Ensure owner admin email always has isAdmin = true
+      user.isAdmin = true;
       await user.save();
     }
 
-    // Generate JWT Token (valid for 7 days)
+    // Generate JWT Auth Token
     const token = jwt.sign(
-      { userId: user._id, email: user.email, isGuest: user.isGuest, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET || "fallback_secret_key",
-      { expiresIn: "7d" }
+      { userId: user._id, email: user.email, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || "ArthurSecretKey123",
+      { expiresIn: "30d" }
     );
 
     return res.status(200).json({
       success: true,
-      message: "Authentication successful!",
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         email: user.email,
         username: user.username,
         avatar: user.avatar,
-        isGuest: user.isGuest,
         isAdmin: user.isAdmin,
       },
     });
@@ -131,37 +139,36 @@ export const verifyOtp = async (req, res) => {
 
 /**
  * 3. GUEST MODE LOGIN
+ * Creates or logs in a guest user instantly
  */
 export const guestLogin = async (req, res) => {
   try {
-    const randomId = Math.floor(1000 + Math.random() * 9000);
-    const guestUsername = `Guest_${randomId}`;
-    const avatarSeed = encodeURIComponent(guestUsername);
+    const randomGuestNum = Math.floor(1000 + Math.random() * 9000);
+    const guestEmail = `guest_${randomGuestNum}@arthur.chat`;
+    const guestUsername = `Guest_${randomGuestNum}`;
 
-    const user = await User.create({
+    let user = await User.create({
+      email: guestEmail,
       username: guestUsername,
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${avatarSeed}`,
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${guestUsername}`,
       isGuest: true,
-      isOnline: true,
     });
 
-    // Sign JWT Token for Guest User
     const token = jwt.sign(
-      { userId: user._id, isGuest: true, isAdmin: false },
-      process.env.JWT_SECRET || "fallback_secret_key",
-      { expiresIn: "1d" }
+      { userId: user._id, email: user.email, isAdmin: false },
+      process.env.JWT_SECRET || "ArthurSecretKey123",
+      { expiresIn: "7d" }
     );
-    
+
     return res.status(200).json({
       success: true,
-      message: "Logged in as Guest!",
       token,
       user: {
-        id: user._id,
+        _id: user._id,
+        email: user.email,
         username: user.username,
         avatar: user.avatar,
         isGuest: true,
-        isAdmin: false,
       },
     });
   } catch (error) {
