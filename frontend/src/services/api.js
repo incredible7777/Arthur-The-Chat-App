@@ -1,10 +1,15 @@
 import axios from "axios";
 
-// Detect if running on localhost or live production
-const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const getBaseURL = () => {
+  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return "https://arthur-backend-wilm.onrender.com/api";
+  }
+  return "http://localhost:8080/api";
+};
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || (isLocal ? "http://localhost:8080/api" : "https://arthur-backend-wilm.onrender.com/api"),
+  baseURL: getBaseURL(),
 });
 
 // Axios Request Interceptor: Automatically attach JWT token from localStorage to all requests
