@@ -8,7 +8,7 @@ import transporter from "../config/mailconfig.js";
 export const sendOtpEmail = async (toEmail, otpCode) => {
   console.log(`OTP email request started for ${toEmail}`);
   const mailOptions = {
-    from: process.env.SMTP_FROM || `"Arthur Support" <${process.env.SMTP_USER}>`,
+    from: process.env.SMTP_USER || "atulyapandey1@gmail.com",
     to: toEmail,
     subject: `Your Arthur Verification Code: ${otpCode}`,
     html: `
