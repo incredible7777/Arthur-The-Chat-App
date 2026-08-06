@@ -4,7 +4,7 @@ let socket = null;
 
 export const connectSocket = (token) => {
   if (!socket) {
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
+    const socketUrl = "https://arthur-backend-wilm.onrender.com";
 
     socket = io(socketUrl, {
       auth: {
