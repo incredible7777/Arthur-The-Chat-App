@@ -143,6 +143,8 @@ export const guestLogin = async (req, res) => {
       isGuest: true,
     });
 
+    console.log(`👤 [GUEST MODE LOGIN] New guest user created: ${user.username}`);
+
     const token = jwt.sign(
       { userId: user._id, email: user.email, isAdmin: false },
       process.env.JWT_SECRET || "ArthurSecretKey123",
