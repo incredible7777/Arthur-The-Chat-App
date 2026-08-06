@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 import "./config/mongo.js";
+import "./config/mailconfig.js";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/user.js";
 import chatMessageRoutes from "./routes/chatmssg.js";
