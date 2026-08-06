@@ -36,6 +36,7 @@ const AdminDashboard = () => {
   const handleAdminLogout = () => {
     localStorage.removeItem("adminToken");
     setIsAdminLoggedIn(false);
+    window.location.href = "/";
   };
 
   // Fetch admin dashboard data
