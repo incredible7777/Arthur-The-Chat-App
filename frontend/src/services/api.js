@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://arthur-backend-wilm.onrender.com/api",
+  baseURL: process.env.REACT_APP_API_URL || "https://arthur-backend-wilm.onrender.com/api",
 });
 
 // Axios Request Interceptor: Automatically attach JWT token from localStorage to all requests
