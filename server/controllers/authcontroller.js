@@ -38,14 +38,18 @@ export const sendOtp = async (req, res) => {
       otpHash,
     });
 
-    console.log(`🔑 [GENERATED OTP FOR ${cleanEmail}]: ${otpCode}`);
+    console.log(`🔑 [DB OTP CODE FOR ${cleanEmail}]: ${otpCode}`);
 
-    // Send the email with graceful error handling
+    // Send the email with accurate status logging
     try {
-      await sendOtpEmail(cleanEmail, otpCode);
-      console.log(`📩 [EMAIL DELIVERED] to ${cleanEmail}: ${otpCode}`);
+      const mailResult = await sendOtpEmail(cleanEmail, otpCode);
+      if (mailResult && (mailResult.messageId || mailResult.id || mailResult.success === true)) {
+        console.log(`🎉 [EMAIL DELIVERED TO INBOX] for ${cleanEmail}: ${otpCode}`);
+      } else {
+        console.log(`⚠️ [EMAIL TIMED OUT ON RENDER CLOUD] Code stored in DB for ${cleanEmail}: ${otpCode}`);
+      }
     } catch (mailError) {
-      console.error(`⚠️ [MAIL TIMEOUT WARNING for ${cleanEmail}]:`, mailError.message);
+      console.error(`⚠️ [MAIL DELIVERY TIMEOUT for ${cleanEmail}]:`, mailError.message);
     }
 
     return res.status(200).json({
