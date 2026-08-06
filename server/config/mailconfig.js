@@ -3,25 +3,26 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create Nodemailer Transporter with pooled socket connections for instant cloud delivery
+// Create Nodemailer Transporter using Port 465 SSL
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  pool: true,
-  maxConnections: 5,
-  maxMessages: 100,
-  rateLimit: 10,
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 // Verify connection configuration on startup
 transporter.verify((error) => {
   if (error) {
-    console.error("SMTP Connection Check Warning:", error.message);
+    console.error("SMTP Connection Warning:", error.message);
   } else {
-    console.log(" Email SMTP Pooled Transporter is ready.");
+    console.log(" Email SMTP Transporter is ready.");
   }
 });
 
