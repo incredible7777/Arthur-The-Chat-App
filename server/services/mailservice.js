@@ -1,24 +1,93 @@
+import https from "https";
 import transporter from "../config/mailconfig.js";
 
 /**
- * Sends a clean HTML email containing the 6-digit OTP code to the specified user email
+ * Sends a clean HTML email containing the 6-digit OTP code to the specified user email.
+ * Supports zero-dependency Resend HTTPS API (Port 443) for 1-second cloud inbox delivery on Render,
+ * with automatic fallback to standard Nodemailer.
+ * 
  * @param {string} toEmail - Recipient email address
  * @param {string} otpCode - 6-digit numerical OTP code
  */
 export const sendOtpEmail = async (toEmail, otpCode) => {
-  console.log(`OTP email request started for ${toEmail}`);
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  // 1. If RESEND_API_KEY is present, send via Resend HTTPS API (Port 443 - 100% open on Render cloud)
+  if (resendApiKey) {
+    console.log(`📩 Sending OTP email to ${toEmail} via Resend Cloud API...`);
+    return new Promise((resolve, reject) => {
+      const payload = JSON.stringify({
+        from: "Arthur Verification <onboarding@resend.dev>",
+        to: [toEmail],
+        subject: `Your Arthur Verification Code: ${otpCode}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+            <h2 style="color: #060707; text-align: center; margin-bottom: 10px;">Arthur Verification</h2>
+            <p style="font-size: 14px; color: #334155;">Hello,</p>
+            <p style="font-size: 14px; color: #334155;">Your 6-digit Verification Code (OTP) to log in to Arthur is:</p>
+            
+            <div style="background-color: #f1f5f9; padding: 18px; text-align: center; border-radius: 12px; margin: 20px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0b0b0b;">${otpCode}</span>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b;">This code is valid for <strong>5 minutes</strong>. Do not share this code with anyone.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <p style="font-size: 11px; color: #94a3b8; text-align: center;">If you did not request this code, please ignore this email.</p>
+          </div>
+        `,
+      });
+
+      const req = https.request(
+        {
+          hostname: "api.resend.com",
+          port: 443,
+          path: "/emails",
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => (body += chunk));
+          res.on("end", () => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              console.log(`🎉 OTP email delivered successfully via Resend to ${toEmail}`);
+              resolve(JSON.parse(body));
+            } else {
+              console.error(`❌ Resend API Error (${res.statusCode}):`, body);
+              reject(new Error(`Resend API returned status ${res.statusCode}: ${body}`));
+            }
+          });
+        }
+      );
+
+      req.on("error", (err) => {
+        console.error("❌ Resend HTTPS Request Error:", err.message);
+        reject(err);
+      });
+
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  // 2. Fallback to standard Nodemailer Gmail SMTP
+  console.log(`📩 Sending OTP email to ${toEmail} via Nodemailer Gmail SMTP...`);
   const mailOptions = {
     from: process.env.SMTP_USER || "atulyapandey1@gmail.com",
     to: toEmail,
     subject: `Your Arthur Verification Code: ${otpCode}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
-        <h2 style="color: #060707ff; text-align: center; margin-bottom: 10px;">Arthur Verification</h2>
+        <h2 style="color: #060707; text-align: center; margin-bottom: 10px;">Arthur Verification</h2>
         <p style="font-size: 14px; color: #334155;">Hello,</p>
         <p style="font-size: 14px; color: #334155;">Your 6-digit Verification Code (OTP) to log in to Arthur is:</p>
         
         <div style="background-color: #f1f5f9; padding: 18px; text-align: center; border-radius: 12px; margin: 20px 0;">
-          <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0b0b0bff;">${otpCode}</span>
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #0b0b0b;">${otpCode}</span>
         </div>
 
         <p style="font-size: 13px; color: #64748b;">This code is valid for <strong>5 minutes</strong>. Do not share this code with anyone.</p>

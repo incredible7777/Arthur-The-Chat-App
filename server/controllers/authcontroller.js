@@ -19,8 +19,8 @@ export const sendOtp = async (req, res) => {
     }
 
     cleanEmail = email.toLowerCase().trim();
-    const timestamp = new Date().toLocaleTimeString();
-    console.log(`📩 [NEW OTP REQUEST] Email: ${cleanEmail} | Time: ${timestamp}`);
+    const timestamp = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
+    console.log(`📩 [NEW OTP REQUEST] Email: ${cleanEmail} | IST Time: ${timestamp}`);
 
     // Generate cryptographically secure 6-digit code
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
