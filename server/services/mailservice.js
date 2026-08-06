@@ -6,6 +6,7 @@ import transporter from "../config/mailconfig.js";
  * @param {string} otpCode - 6-digit numerical OTP code
  */
 export const sendOtpEmail = async (toEmail, otpCode) => {
+  console.log(`OTP email request started for ${toEmail}`);
   const mailOptions = {
     from: process.env.SMTP_FROM || `"Arthur Support" <${process.env.SMTP_USER}>`,
     to: toEmail,

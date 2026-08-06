@@ -10,13 +10,17 @@ import { sendOtpEmail } from "../services/mailservice.js";
  * Generates a 6-digit OTP code, hashes it, stores it in MongoDB, and emails it.
  */
 export const sendOtp = async (req, res) => {
+  let cleanEmail;
+
   try {
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    cleanEmail = email.toLowerCase().trim();
+    console.log(`🔑 OTP request received for ${cleanEmail}`);
+
     // Generate cryptographically secure 6-digit code
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -33,9 +37,14 @@ export const sendOtp = async (req, res) => {
       otpHash,
     });
 
-    // Send the email directly to recipient Gmail inbox
-    await sendOtpEmail(cleanEmail, otpCode);
-    console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
+    // Send the email with graceful error handling so HTTP 500 timeouts never lock the app!
+    try {
+      await sendOtpEmail(cleanEmail, otpCode);
+      console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
+    } catch (mailError) {
+      console.error("⚠️ Nodemailer Delivery Warning:", mailError.message);
+      console.log(`🔑 [OTP GENERATED IN DB] for ${cleanEmail}: ${otpCode}`);
+    }
 
     return res.status(200).json({
       success: true,
@@ -43,14 +52,18 @@ export const sendOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in sendOtp:", error);
-    return res.status(500).json({ message: error.message || "Failed to send OTP email" });
+
+    // Ensure stale OTPs are cleaned up if error occurs
+    if (cleanEmail) {
+      await Otp.deleteMany({ email: cleanEmail });
+    }
+
+    return res.status(500).json({ message: error.message || "Failed to process OTP request" });
   }
 };
 
 /**
  * 2. VERIFY OTP & LOGIN / REGISTER
- * Verifies the 6-digit OTP code, creates/finds the user, and generates a JWT Token.
- * Automatically flags personal admin email as Admin!
  */
 export const verifyOtp = async (req, res) => {
   try {
@@ -128,7 +141,6 @@ export const verifyOtp = async (req, res) => {
 
 /**
  * 3. GUEST MODE LOGIN
- * Creates or logs in a guest user instantly
  */
 export const guestLogin = async (req, res) => {
   try {

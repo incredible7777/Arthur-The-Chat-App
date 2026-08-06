@@ -3,26 +3,24 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create Nodemailer Transporter using Port 465 SSL for Render Cloud Hosting
+// Create Nodemailer Transporter using official Gmail service configuration
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Port 465 SSL (Required by Render Cloud Firewall)
+  service: "gmail",
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 // Verify connection configuration on startup
-transporter.verify((error, success) => {
+transporter.verify((error) => {
   if (error) {
-    console.error("SMTP Transporter Connection Error:", error.message);
+    console.error("SMTP Connection Check Warning:", error.message);
   } else {
-    console.log(" Email SMTP Transporter is ready to send messages on Port 465 SSL");
+    console.log(" Email SMTP Transporter is ready via Gmail service.");
   }
 });
 
