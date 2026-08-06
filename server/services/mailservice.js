@@ -3,8 +3,6 @@ import transporter from "../config/mailconfig.js";
 
 /**
  * Sends a clean HTML email containing the 6-digit OTP code to the specified user email.
- * Supports zero-dependency Resend HTTPS API (Port 443) for 1-second cloud inbox delivery on Render,
- * with automatic fallback to standard Nodemailer.
  * 
  * @param {string} toEmail - Recipient email address
  * @param {string} otpCode - 6-digit numerical OTP code
@@ -12,10 +10,10 @@ import transporter from "../config/mailconfig.js";
 export const sendOtpEmail = async (toEmail, otpCode) => {
   const resendApiKey = process.env.RESEND_API_KEY;
 
-  // 1. If RESEND_API_KEY is present, send via Resend HTTPS API (Port 443 - 100% open on Render cloud)
+  // 1. If RESEND_API_KEY is present, send via Resend HTTPS API (Port 443)
   if (resendApiKey) {
     console.log(`📩 Sending OTP email to ${toEmail} via Resend Cloud API...`);
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const payload = JSON.stringify({
         from: "Arthur Verification <onboarding@resend.dev>",
         to: [toEmail],
@@ -53,20 +51,15 @@ export const sendOtpEmail = async (toEmail, otpCode) => {
           let body = "";
           res.on("data", (chunk) => (body += chunk));
           res.on("end", () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              console.log(`🎉 OTP email delivered successfully via Resend to ${toEmail}`);
-              resolve(JSON.parse(body));
-            } else {
-              console.error(`❌ Resend API Error (${res.statusCode}):`, body);
-              reject(new Error(`Resend API returned status ${res.statusCode}: ${body}`));
-            }
+            console.log(`🎉 Resend API response (${res.statusCode}):`, body);
+            resolve({ success: res.statusCode >= 200 && res.statusCode < 300 });
           });
         }
       );
 
       req.on("error", (err) => {
-        console.error("❌ Resend HTTPS Request Error:", err.message);
-        reject(err);
+        console.error("⚠️ Resend HTTPS Request Warning:", err.message);
+        resolve({ success: false, warning: err.message });
       });
 
       req.write(payload);
@@ -74,7 +67,7 @@ export const sendOtpEmail = async (toEmail, otpCode) => {
     });
   }
 
-  // 2. Fallback to standard Nodemailer Gmail SMTP
+  // 2. Fallback to standard Nodemailer Gmail SMTP with safe error handling
   console.log(`📩 Sending OTP email to ${toEmail} via Nodemailer Gmail SMTP...`);
   const mailOptions = {
     from: process.env.SMTP_USER || "atulyapandey1@gmail.com",
@@ -97,7 +90,12 @@ export const sendOtpEmail = async (toEmail, otpCode) => {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  console.log(`📩 OTP email sent successfully to ${toEmail}. Message ID: ${info.messageId}`);
-  return info;
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`📩 OTP email sent successfully to ${toEmail}. Message ID: ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error(`⚠️ Nodemailer delivery warning for ${toEmail}:`, error.message);
+    return { success: false, warning: error.message };
+  }
 };
