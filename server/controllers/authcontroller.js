@@ -19,7 +19,8 @@ export const sendOtp = async (req, res) => {
     }
 
     cleanEmail = email.toLowerCase().trim();
-    console.log(`🔑 OTP request received for ${cleanEmail}`);
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`📩 [NEW OTP REQUEST] Email: ${cleanEmail} | Time: ${timestamp}`);
 
     // Generate cryptographically secure 6-digit code
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -37,13 +38,14 @@ export const sendOtp = async (req, res) => {
       otpHash,
     });
 
-    // Send the email with graceful error handling so HTTP 500 timeouts never lock the app!
+    console.log(`🔑 [GENERATED OTP FOR ${cleanEmail}]: ${otpCode}`);
+
+    // Send the email with graceful error handling
     try {
       await sendOtpEmail(cleanEmail, otpCode);
-      console.log(`🔑 [OTP SENT VIA EMAIL] to ${cleanEmail}: ${otpCode}`);
+      console.log(`📩 [EMAIL DELIVERED] to ${cleanEmail}: ${otpCode}`);
     } catch (mailError) {
-      console.error("⚠️ Nodemailer Delivery Warning:", mailError.message);
-      console.log(`🔑 [OTP GENERATED IN DB] for ${cleanEmail}: ${otpCode}`);
+      console.error(`⚠️ [MAIL TIMEOUT WARNING for ${cleanEmail}]:`, mailError.message);
     }
 
     return res.status(200).json({
@@ -53,7 +55,6 @@ export const sendOtp = async (req, res) => {
   } catch (error) {
     console.error("Error in sendOtp:", error);
 
-    // Ensure stale OTPs are cleaned up if error occurs
     if (cleanEmail) {
       await Otp.deleteMany({ email: cleanEmail });
     }

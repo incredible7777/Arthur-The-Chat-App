@@ -23,6 +23,7 @@ const createRateLimiter = ({ windowMs, max, message }) => {
     rateLimitStore.set(identifier, record);
 
     if (record.count > max) {
+      console.log(`⚠️ [RATE LIMIT BLOCKED] Blocked rapid request attempt for: ${identifier}`);
       return res.status(429).json({ message });
     }
 
@@ -32,12 +33,12 @@ const createRateLimiter = ({ windowMs, max, message }) => {
 
 export const otpRequestLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,
+  max: 50,
   message: "Too many OTP requests for this email. Please try again after a few minutes.",
 });
 
 export const otpVerifyLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,
+  max: 50,
   message: "Too many verification attempts. Please try again after a few minutes.",
 });
