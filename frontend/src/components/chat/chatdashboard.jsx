@@ -350,6 +350,7 @@ const ChatDashboard = () => {
           onOpenAddFriend={() => setShowAddFriend(true)}
           onOpenProfile={() => setProfileModalData({ targetUser: user, isSelf: true })}
           onLogout={logout}
+          onToggleAi={() => setIsAiOpen((prev) => !prev)}
         />
       </div>
 
@@ -389,7 +390,7 @@ const ChatDashboard = () => {
         />
       )}
 
-      {/* Floating Top-Right AI Chatbot Widget 🤖 */}
+      {/* Floating / Top-Right AI Chatbot Widget 🤖 */}
       <AiChatWidget
         currentUser={user}
         friends={friends}
@@ -397,6 +398,7 @@ const ChatDashboard = () => {
         onRefreshFriends={fetchData}
         isOpen={isAiOpen}
         onToggle={() => setIsAiOpen((prev) => !prev)}
+        hasActiveChat={Boolean(activeChat)}
       />
     </div>
   );

@@ -9,6 +9,7 @@ const AiChatWidget = ({
   onRefreshFriends,
   isOpen: externalIsOpen,
   onToggle: externalOnToggle,
+  hasActiveChat = false,
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -109,7 +110,7 @@ const AiChatWidget = ({
       {
         id: Date.now().toString(),
         sender: "ai",
-        text: "Chat cleared! How can I help you next?",
+        text: `Chat cleared! How can I help you next, ${username}?`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
     ]);
@@ -139,10 +140,18 @@ const AiChatWidget = ({
   };
 
   return (
-    <div className="fixed top-16 right-4 sm:right-6 z-50 flex flex-col items-end">
+    <div
+      className={`fixed z-50 flex flex-col items-end ${
+        hasActiveChat ? "top-16 right-4 sm:right-6" : "bottom-6 right-6"
+      }`}
+    >
       {/* Floating Window Overlay */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[380px] h-[460px] sm:h-[500px] max-h-[75vh] mb-3 bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-5 duration-200">
+        <div
+          className={`w-[92vw] sm:w-[380px] h-[460px] sm:h-[500px] max-h-[75vh] bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in ${
+            hasActiveChat ? "slide-in-from-top-5 mt-1" : "slide-in-from-bottom-5 mb-3"
+          }`}
+        >
           
           {/* Header */}
           <div className="p-3.5 bg-[#171E2C] border-b border-[#232D42] flex items-center justify-between">
@@ -284,28 +293,30 @@ const AiChatWidget = ({
         </div>
       )}
 
-      {/* Floating Trigger Button */}
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        title="Chat with Arthur AI"
-        className="group relative p-3.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-xl shadow-blue-500/30 hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center"
-      >
-        {isOpen ? (
-          <X className="w-6 h-6" />
-        ) : (
-          <div className="relative">
-            <Bot className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0B0E14] animate-pulse" />
-          </div>
-        )}
+      {/* Floating Trigger Button (Rendered ONLY on Home Page / No Active Chat) */}
+      {!hasActiveChat && (
+        <button
+          onClick={() => setIsOpen((prev) => !prev)}
+          title="Chat with Arthur AI"
+          className="group relative p-3.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-xl shadow-blue-500/30 hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center"
+        >
+          {isOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <div className="relative">
+              <Bot className="w-6 h-6" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0B0E14] animate-pulse" />
+            </div>
+          )}
 
-        {/* Hover Tooltip */}
-        {!isOpen && (
-          <span className="absolute right-14 bg-[#171E2C] text-white text-xs font-semibold px-2.5 py-1 rounded-lg border border-[#232D42] shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            Arthur AI 🤖
-          </span>
-        )}
-      </button>
+          {/* Hover Tooltip */}
+          {!isOpen && (
+            <span className="absolute right-14 bg-[#171E2C] text-white text-xs font-semibold px-2.5 py-1 rounded-lg border border-[#232D42] shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Arthur AI 🤖
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 };

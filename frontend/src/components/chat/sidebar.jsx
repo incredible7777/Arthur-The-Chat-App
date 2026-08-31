@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LogOut, UserPlus, Users, Bell, Check, UserCheck, UserMinus, ShieldAlert, Settings } from "lucide-react";
+import { LogOut, UserPlus, Users, Bell, Check, UserCheck, UserMinus, ShieldAlert, Settings, Bot, Sparkles } from "lucide-react";
 
 const Sidebar = ({
   user,
@@ -14,6 +14,7 @@ const Sidebar = ({
   onOpenAddFriend,
   onOpenProfile,
   onLogout,
+  onToggleAi,
 }) => {
   const [tab, setTab] = useState("friends"); // "friends" or "requests"
 
@@ -45,6 +46,17 @@ const Sidebar = ({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Arthur AI Shortcut Button */}
+          {onToggleAi && (
+            <button
+              onClick={onToggleAi}
+              title="Arthur AI Assistant"
+              className="p-2 text-blue-400 hover:text-blue-300 rounded-lg hover:bg-blue-500/10 transition-colors cursor-pointer"
+            >
+              <Bot className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Settings / Profile Button */}
           <button
             onClick={onOpenProfile}
