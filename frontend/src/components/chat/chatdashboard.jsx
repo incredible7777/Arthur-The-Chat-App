@@ -23,6 +23,7 @@ const ChatDashboard = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [isAiOpen, setIsAiOpen] = useState(false);
 
   // Fetch initial profile, friends, & unread message counts
   const fetchData = useCallback(async () => {
@@ -367,6 +368,8 @@ const ChatDashboard = () => {
           onBack={handleBackToContacts}
           onReportUser={(targetUser) => setReportModalUser(targetUser)}
           onOpenFriendProfile={(friendUser) => setProfileModalData({ targetUser: friendUser, isSelf: false })}
+          onToggleAi={() => setIsAiOpen((prev) => !prev)}
+          isAiOpen={isAiOpen}
         />
       </div>
 
@@ -386,11 +389,14 @@ const ChatDashboard = () => {
         />
       )}
 
-      {/* Floating Bottom-Right AI Chatbot Widget 🤖 */}
+      {/* Floating Top-Right AI Chatbot Widget 🤖 */}
       <AiChatWidget
+        currentUser={user}
         friends={friends}
         activeChatMessages={messages}
         onRefreshFriends={fetchData}
+        isOpen={isAiOpen}
+        onToggle={() => setIsAiOpen((prev) => !prev)}
       />
     </div>
   );

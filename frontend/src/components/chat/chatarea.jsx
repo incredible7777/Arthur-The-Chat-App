@@ -16,6 +16,8 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import { getSocket } from "../../services/socketservice";
 
@@ -42,6 +44,8 @@ const ChatArea = ({
   onBack,
   onReportUser,
   onOpenFriendProfile,
+  onToggleAi,
+  isAiOpen,
 }) => {
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
@@ -218,6 +222,22 @@ const ChatArea = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Arthur AI Header Button 🤖 */}
+          {onToggleAi && (
+            <button
+              onClick={onToggleAi}
+              title="Arthur AI Assistant"
+              className={`p-2 rounded-xl border transition-all cursor-pointer touch-manipulation flex items-center gap-1.5 ${
+                isAiOpen
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400/50 shadow-md shadow-blue-500/30 scale-105"
+                  : "bg-[#171E2C] border-[#232D42] text-slate-300 hover:text-white hover:border-blue-500/40"
+              }`}
+            >
+              <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400 hidden sm:inline" />
+            </button>
+          )}
+
           {/* Search Toggle Button */}
           <button
             onClick={() => setShowSearch(!showSearch)}

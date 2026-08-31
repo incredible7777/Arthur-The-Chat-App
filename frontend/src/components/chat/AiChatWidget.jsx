@@ -2,18 +2,46 @@ import React, { useState, useRef, useEffect } from "react";
 import { Sparkles, Bot, X, Send, Trash2, Minus, Loader2, Users, UserPlus, FileText, HelpCircle } from "lucide-react";
 import API from "../../services/api";
 
-const AiChatWidget = ({ friends = [], activeChatMessages = [], onRefreshFriends }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const AiChatWidget = ({
+  currentUser,
+  friends = [],
+  activeChatMessages = [],
+  onRefreshFriends,
+  isOpen: externalIsOpen,
+  onToggle: externalOnToggle,
+}) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalOnToggle || setInternalIsOpen;
+
   const [inputPrompt, setInputPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const username = currentUser?.username || "there";
   const [messages, setMessages] = useState([
     {
       id: "welcome",
       sender: "ai",
-      text: "Hello! 👋 I'm **Arthur AI**, your floating assistant! Ask me anything, or command me to **show your friends**, **unfriend someone**, or **summarize your chat**!",
+      text: `Hii ${username}! 👋 I'm **Arthur AI**, your assistant! Ask me anything, or command me to **show your friends**, **unfriend someone**, or **summarize your chat**!`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
+
+  // Update welcome message if username changes
+  useEffect(() => {
+    if (currentUser?.username) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === "welcome"
+            ? {
+                ...m,
+                text: `Hii ${currentUser.username}! 👋 I'm **Arthur AI**, your assistant! Ask me anything, or command me to **show your friends**, **unfriend someone**, or **summarize your chat**!`,
+              }
+            : m
+        )
+      );
+    }
+  }, [currentUser?.username]);
 
   const messagesEndRef = useRef(null);
 
@@ -111,10 +139,10 @@ const AiChatWidget = ({ friends = [], activeChatMessages = [], onRefreshFriends 
   };
 
   return (
-    <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 flex flex-col items-end">
+    <div className="fixed top-16 right-4 sm:right-6 z-50 flex flex-col items-end">
       {/* Floating Window Overlay */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[380px] h-[460px] sm:h-[500px] max-h-[75vh] mb-3 bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="w-[92vw] sm:w-[380px] h-[460px] sm:h-[500px] max-h-[75vh] mb-3 bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-5 duration-200">
           
           {/* Header */}
           <div className="p-3.5 bg-[#171E2C] border-b border-[#232D42] flex items-center justify-between">
