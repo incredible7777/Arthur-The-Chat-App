@@ -141,18 +141,19 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
   if (apiKey) {
-    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-pro"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
     let lastError = null;
+
+    const fullPrompt = systemInstruction
+      ? `${systemInstruction}\n\nUser Question: ${prompt}`
+      : prompt;
 
     for (const modelName of modelsToTry) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          systemInstruction,
-        });
+        const model = genAI.getGenerativeModel({ model: modelName });
 
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(fullPrompt);
         const text = result.response.text();
 
         if (text) {
