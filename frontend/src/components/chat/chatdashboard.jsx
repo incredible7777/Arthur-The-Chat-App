@@ -209,8 +209,8 @@ const ChatDashboard = () => {
     setIsTyping(false);
   };
 
-  // Send message (text, image, or document file) handler
-  const handleSendMessage = async (text, image = null, fileObj = null) => {
+  // Send message (text, image, document file, or reply) handler
+  const handleSendMessage = async (text, image = null, fileObj = null, replyTo = null) => {
     if (!activeRoom || !activeChat) return;
 
     try {
@@ -222,6 +222,7 @@ const ChatDashboard = () => {
         fileName: fileObj ? fileObj.fileName : null,
         fileSize: fileObj ? fileObj.fileSize : null,
         messageType: image ? "image" : fileObj ? "file" : "text",
+        replyTo: replyTo || null,
       };
 
       const res = await API.post("/message/send", payload);

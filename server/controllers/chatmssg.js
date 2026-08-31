@@ -32,7 +32,7 @@ export const getOrCreateRoom = async (req, res) => {
  */
 export const createMessage = async (req, res) => {
   try {
-    const { chatRoomId, message, image, fileUrl, fileName, fileSize, messageType } = req.body;
+    const { chatRoomId, message, image, fileUrl, fileName, fileSize, messageType, replyTo } = req.body;
     const senderId = req.user.userId;
 
     const newMessage = await ChatMessage.create({
@@ -44,6 +44,7 @@ export const createMessage = async (req, res) => {
       fileName: fileName || null,
       fileSize: fileSize || null,
       messageType: messageType || (image ? "image" : fileUrl ? "file" : "text"),
+      replyTo: replyTo || null,
     });
 
     const populatedMessage = await ChatMessage.findById(newMessage._id).populate(

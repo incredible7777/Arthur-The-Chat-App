@@ -65,6 +65,18 @@ const chatMessageSchema = new mongoose.Schema(
     readAt: {
       type: Date,
     },
+    replyTo: {
+      messageId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ChatMessage",
+      },
+      senderName: {
+        type: String,
+      },
+      text: {
+        type: String,
+      },
+    },
   },
   {
     timestamps: true,

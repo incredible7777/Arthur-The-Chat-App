@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bot,
+  CornerUpLeft,
 } from "lucide-react";
 import { getSocket } from "../../services/socketservice";
 
@@ -49,6 +50,7 @@ const ChatArea = ({
   const [text, setText] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null); // { fileUrl, fileName, fileSize }
+  const [replyingTo, setReplyingTo] = useState(null); // { messageId, senderName, text }
   const [previewModalImage, setPreviewModalImage] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -59,6 +61,11 @@ const ChatArea = ({
   const fileInputRef = useRef(null);
   const docInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Gesture refs for swipe & long-press
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const longPressTimerRef = useRef(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -137,10 +144,11 @@ const ChatArea = ({
     e.preventDefault();
     if (!text.trim() && !selectedImage && !selectedFile) return;
 
-    onSendMessage(text.trim(), selectedImage, selectedFile);
+    onSendMessage(text.trim(), selectedImage, selectedFile, replyingTo);
     setText("");
     setSelectedImage(null);
     setSelectedFile(null);
+    setReplyingTo(null);
 
     const socket = getSocket();
     if (socket && activeChat && activeRoom) {
@@ -148,6 +156,39 @@ const ChatArea = ({
         chatRoomId: activeRoom._id,
         receiverId: activeChat._id,
       });
+    }
+  };
+
+  // Long press timer start
+  const handleTouchStart = (m, senderName, e) => {
+    touchStartXRef.current = e.touches ? e.touches[0].clientX : e.clientX;
+    touchStartYRef.current = e.touches ? e.touches[0].clientY : e.clientY;
+
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      if (navigator.vibrate) navigator.vibrate(40);
+      setActiveMobileActionMsgId(m._id);
+    }, 450);
+  };
+
+  // Touch end / Swipe detection
+  const handleTouchEnd = (m, senderName, e) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+
+    const endX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const diffX = endX - touchStartXRef.current;
+    const diffY = endY - touchStartYRef.current;
+
+    // Trigger swipe to reply if horizontal drag > 50px
+    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 30) {
+      if (navigator.vibrate) navigator.vibrate(25);
+      setReplyingTo({
+        messageId: m._id,
+        senderName: senderName,
+        text: m.message || m.fileName || (m.image ? "Photo attachment" : "Attachment"),
+      });
+      setActiveMobileActionMsgId(null);
     }
   };
 
@@ -357,6 +398,7 @@ const ChatArea = ({
             const senderId = typeof m.sender === "object" ? m.sender?._id || m.sender?.id : m.sender;
             const currentUserId = typeof currentUser === "object" ? currentUser?._id || currentUser?.id : currentUser;
             const isMe = String(senderId) === String(currentUserId);
+            const senderName = isMe ? "You" : (typeof m.sender === "object" ? m.sender?.username : activeChat.username);
             const isHighlighted = highlightedMsgId === m._id;
             const isMobileActionOpen = activeMobileActionMsgId === m._id;
 
@@ -366,10 +408,14 @@ const ChatArea = ({
                 id={`msg-${m._id}`}
                 className={`flex flex-col ${isMe ? "items-end" : "items-start"} space-y-1 relative group pt-6 -mt-6`}
               >
-                {/* Message Bubble Container */}
+                {/* Message Bubble Container with Swipe & Long Press Handlers */}
                 <div
+                  onTouchStart={(e) => handleTouchStart(m, senderName, e)}
+                  onTouchEnd={(e) => handleTouchEnd(m, senderName, e)}
+                  onMouseDown={(e) => handleTouchStart(m, senderName, e)}
+                  onMouseUp={(e) => handleTouchEnd(m, senderName, e)}
                   onClick={() => setActiveMobileActionMsgId(isMobileActionOpen ? null : m._id)}
-                  className={`relative max-w-[88%] sm:max-w-[70%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm transition-all cursor-pointer ${
+                  className={`relative max-w-[88%] sm:max-w-[70%] p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-sm transition-all cursor-pointer touch-pan-y ${
                     isHighlighted ? "ring-2 ring-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.5)] scale-[1.02]" : ""
                   } ${
                     m.isDeleted
@@ -386,14 +432,30 @@ const ChatArea = ({
                     </div>
                   )}
 
-                  {/* Reaction / Pin / Unsend Action Bar (Visible on Hover OR Mobile Tap!) */}
+                  {/* Quoted Reply Preview Inside Message Bubble */}
+                  {m.replyTo && !m.isDeleted && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        scrollToMessage(m.replyTo.messageId);
+                      }}
+                      className="mb-2 p-2 rounded-lg bg-black/25 border-l-4 border-amber-400 text-xs cursor-pointer hover:bg-black/35 transition-colors"
+                    >
+                      <p className="font-semibold text-amber-300 text-[11px] flex items-center gap-1">
+                        <CornerUpLeft className="w-3 h-3" /> Replying to {m.replyTo.senderName}
+                      </p>
+                      <p className="truncate text-slate-200 text-[11px] italic">{m.replyTo.text}</p>
+                    </div>
+                  )}
+
+                  {/* Action Bar (Reply, React, Pin, Delete) - Visible on Hover OR Tap OR Long Press */}
                   {!m.isDeleted && (
                     <div
                       className={`absolute top-0 -translate-y-full mb-1 flex items-center gap-1 bg-[#121722] border border-[#232D42] p-1 rounded-xl shadow-xl z-20 transition-opacity ${
                         isMobileActionOpen ? "opacity-100 pointer-events-auto" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
                       } ${isMe ? "right-0" : "left-0"}`}
                     >
-                      {/* Emoji Quick Picker */}
+                      {/* Quick Emoji Reaction Buttons */}
                       {QUICK_EMOJIS.map((emoji) => (
                         <button
                           key={emoji}
@@ -409,7 +471,25 @@ const ChatArea = ({
                         </button>
                       ))}
 
-                      {/* Pin Toggle Action */}
+                      {/* Reply Action Button ↩️ */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReplyingTo({
+                            messageId: m._id,
+                            senderName: senderName,
+                            text: m.message || m.fileName || (m.image ? "Photo attachment" : "Attachment"),
+                          });
+                          setActiveMobileActionMsgId(null);
+                        }}
+                        title="Reply to Message"
+                        className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-blue-400 transition-colors cursor-pointer touch-manipulation"
+                      >
+                        <CornerUpLeft className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Pin Toggle Action Button */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -529,6 +609,26 @@ const ChatArea = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* ----------------- REPLY PREVIEW BAR BEFORE SENDING ----------------- */}
+      {replyingTo && (
+        <div className="px-4 sm:px-6 py-2 bg-[#121722] border-t border-[#1E2638] flex items-center justify-between border-l-4 border-blue-500 animate-in slide-in-from-bottom-2 flex-shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CornerUpLeft className="w-4 h-4 text-blue-400 flex-shrink-0" />
+            <div className="min-w-0 text-xs">
+              <p className="font-semibold text-blue-400">Replying to {replyingTo.senderName}</p>
+              <p className="text-slate-300 truncate max-w-sm italic">{replyingTo.text}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setReplyingTo(null)}
+            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors touch-manipulation"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* ----------------- PREVIEW ATTACHMENT BAR BEFORE SENDING ----------------- */}
       {(selectedImage || selectedFile) && (
         <div className="px-4 sm:px-6 py-2 bg-[#121722] border-t border-[#1E2638] flex items-center justify-between flex-shrink-0">
@@ -559,7 +659,7 @@ const ChatArea = ({
         </div>
       )}
 
-      {/* ----------------- CHAT INPUT FORM (OPTIMIZED FOR MOBILE TOUCH & KEYBOARD) ----------------- */}
+      {/* ----------------- CHAT INPUT FORM ----------------- */}
       <form onSubmit={handleSubmit} className="p-3 sm:p-4 bg-[#121722] border-t border-[#1E2638] flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Photo Upload Button */}
         <button
@@ -583,7 +683,7 @@ const ChatArea = ({
         </button>
         <input ref={docInputRef} type="file" accept="*" className="hidden" onChange={handleDocSelect} />
 
-        {/* Message Input Box (16px base font size on mobile stops unwanted browser auto-zoom!) */}
+        {/* Message Input Box */}
         <input
           type="text"
           placeholder={`Message ${activeChat.username}...`}
