@@ -138,47 +138,48 @@ export const processAiRequest = async ({ prompt, user, friends = [], activeChatM
  * Helper to call Gemini API or return fallback reply if API key is not configured
  */
 const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply }) => {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const apiKey = process.env.GEMINI_API_KEY?.replace(/["'\r\n]/g, "").trim();
 
   if (apiKey) {
-    const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash"];
-    let lastError = null;
-
     const fullPrompt = systemInstruction
       ? `${systemInstruction}\n\nUser Question: ${prompt}`
       : prompt;
 
-    for (const modelName of modelsToTry) {
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: modelName });
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
-        const result = await model.generateContent(fullPrompt);
-        const text = result.response.text();
+      const result = await model.generateContent(fullPrompt);
+      const text = result.response.text();
 
-        if (text) {
-          return {
-            reply: text,
-            action: "NONE",
-          };
-        }
-      } catch (error) {
-        console.error(`Gemini (${modelName}) Error:`, error.message);
-        lastError = error;
+      if (text) {
+        return {
+          reply: text,
+          action: "NONE",
+        };
       }
-    }
+    } catch (error) {
+      console.error("Gemini API Error:", error.message);
 
-    return {
-      reply: `⚠️ **Gemini API Error**: ${lastError?.message || "Unable to reach Gemini API"}\n\nPlease check your key status at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
-      action: "NONE",
-    };
-  } else {
-    // Smart Fallback when GEMINI_API_KEY is not set yet
-    return {
-      reply: fallbackReply || getFallbackAnswer(prompt),
-      action: "NONE",
-    };
+      if (error.status === 429 || error.message.includes("429") || error.message.includes("quota")) {
+        return {
+          reply: `⚠️ **Free Quota Limit Reached**: Google enforces a free tier rate limit on \`gemini-3.6-flash\` (20 requests/day per key). Please retry in a few minutes or generate a new key at **[Google AI Studio](https://aistudio.google.com/app/apikey)**!`,
+          action: "NONE",
+        };
+      }
+
+      return {
+        reply: `⚠️ **Gemini API Error**: ${error.message || "Unable to reach Gemini API"}\n\nPlease check your key status at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
+        action: "NONE",
+      };
+    }
   }
+
+  // Smart Fallback when GEMINI_API_KEY is not set yet
+  return {
+    reply: fallbackReply || getFallbackAnswer(prompt),
+    action: "NONE",
+  };
 };
 
 /**
