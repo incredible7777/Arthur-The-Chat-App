@@ -91,12 +91,17 @@ const AiChatWidget = ({
       }
     } catch (err) {
       console.error("AI Request Failed:", err);
+      let errorMsg = err.response?.data?.message || err.response?.data?.reply || err.message || "Failed to reach AI server";
+      if (err.response?.status === 401) {
+        errorMsg = "Your session expired. Please sign out and sign back in to activate Arthur AI!";
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: "ai",
-          text: "⚠️ Sorry, I encountered an issue connecting to the AI server.",
+          text: `⚠️ ${errorMsg}`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
