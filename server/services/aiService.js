@@ -148,10 +148,11 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
     const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
     let lastError = null;
 
+    // 1. Try SDK with stable v1 apiVersion
     for (const modelName of modelsToTry) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
 
         const result = await model.generateContent(fullPrompt);
         const text = result.response.text();
@@ -163,8 +164,32 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
           };
         }
       } catch (error) {
-        console.error(`Gemini (${modelName}) Error:`, error.message);
+        console.error(`Gemini SDK (${modelName}) Error:`, error.message);
         lastError = error;
+      }
+    }
+
+    // 2. Direct REST API Fallback to stable v1 endpoint
+    for (const modelName of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          return {
+            reply: data.candidates[0].content.parts[0].text,
+            action: "NONE",
+          };
+        }
+      } catch (e) {
+        console.error(`Gemini REST (${modelName}) Error:`, e.message);
       }
     }
 
