@@ -138,7 +138,7 @@ export const processAiRequest = async ({ prompt, user, friends = [], activeChatM
  * Helper to call Gemini API or return fallback reply if API key is not configured
  */
 const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply }) => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
 
   if (apiKey) {
     try {
@@ -156,9 +156,9 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
         action: "NONE",
       };
     } catch (error) {
-      console.error("Gemini API Error:", error.message);
+      console.error("Gemini API Error:", error);
       return {
-        reply: fallbackReply || "I encountered a temporary issue connecting to Gemini AI. Here is what I know:\n" + getFallbackAnswer(prompt),
+        reply: `⚠️ **Gemini API Error**: ${error.message || "Unable to reach Gemini API"}\n\nPlease check your key at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
         action: "NONE",
       };
     }
