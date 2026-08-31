@@ -17,7 +17,6 @@ import {
   ChevronDown,
   ChevronUp,
   Bot,
-  Sparkles,
 } from "lucide-react";
 import { getSocket } from "../../services/socketservice";
 
@@ -234,7 +233,6 @@ const ChatArea = ({
               }`}
             >
               <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400 hidden sm:inline" />
             </button>
           )}
 

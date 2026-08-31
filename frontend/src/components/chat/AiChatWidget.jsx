@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Sparkles, Bot, X, Send, Trash2, Minus, Loader2, Users, UserPlus, FileText, HelpCircle } from "lucide-react";
+import { Bot, X, Send, Trash2, Minus, Loader2, Users, UserPlus, FileText, HelpCircle } from "lucide-react";
 import API from "../../services/api";
 
 const AiChatWidget = ({
@@ -166,7 +166,7 @@ const AiChatWidget = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                  Arthur AI <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  Arthur AI
                 </h3>
                 <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Online Assistant

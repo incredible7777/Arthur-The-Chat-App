@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, User, Send, ShieldCheck, Zap, Lock, UserCheck, Sparkles, UserPlus } from "lucide-react";
+import { Mail, User, Send, ShieldCheck, Zap, Lock, UserCheck, UserPlus } from "lucide-react";
 import OtpVerify from "./otpverify";
 import { requestOtp, verifyOtpCode, loginAsGuest } from "../../services/authservice";
 import { useAuth } from "../../contexts/authcontext";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LogOut, UserPlus, Users, Bell, Check, UserCheck, UserMinus, ShieldAlert, Settings, Bot, Sparkles } from "lucide-react";
+import { LogOut, UserPlus, Users, Bell, Check, UserCheck, UserMinus, ShieldAlert, Settings, Bot } from "lucide-react";
 
 const Sidebar = ({
   user,
