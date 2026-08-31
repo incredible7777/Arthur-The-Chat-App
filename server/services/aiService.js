@@ -141,27 +141,36 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
   if (apiKey) {
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction,
-      });
+    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash", "gemini-pro"];
+    let lastError = null;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+    for (const modelName of modelsToTry) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction,
+        });
 
-      return {
-        reply: text,
-        action: "NONE",
-      };
-    } catch (error) {
-      console.error("Gemini API Error:", error);
-      return {
-        reply: `⚠️ **Gemini API Error**: ${error.message || "Unable to reach Gemini API"}\n\nPlease check your key at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
-        action: "NONE",
-      };
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        if (text) {
+          return {
+            reply: text,
+            action: "NONE",
+          };
+        }
+      } catch (error) {
+        console.error(`Gemini (${modelName}) Error:`, error.message);
+        lastError = error;
+      }
     }
+
+    return {
+      reply: `⚠️ **Gemini API Error**: ${lastError?.message || "Unable to reach Gemini API"}\n\nPlease check your key status at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
+      action: "NONE",
+    };
   } else {
     // Smart Fallback when GEMINI_API_KEY is not set yet
     return {
