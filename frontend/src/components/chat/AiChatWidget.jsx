@@ -69,7 +69,7 @@ const AiChatWidget = ({
     setLoading(true);
 
     try {
-      const res = await API.post("/api/ai/chat", {
+      const res = await API.post("/ai/chat", {
         prompt: text,
         friends,
         activeChatMessages,
