@@ -145,34 +145,40 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
       ? `${systemInstruction}\n\nUser Question: ${prompt}`
       : prompt;
 
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+    let lastError = null;
 
-      const result = await model.generateContent(fullPrompt);
-      const text = result.response.text();
+    for (const modelName of modelsToTry) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: modelName });
 
-      if (text) {
-        return {
-          reply: text,
-          action: "NONE",
-        };
+        const result = await model.generateContent(fullPrompt);
+        const text = result.response.text();
+
+        if (text) {
+          return {
+            reply: text,
+            action: "NONE",
+          };
+        }
+      } catch (error) {
+        console.error(`Gemini (${modelName}) Error:`, error.message);
+        lastError = error;
       }
-    } catch (error) {
-      console.error("Gemini API Error:", error.message);
+    }
 
-      if (error.status === 429 || error.message.includes("429") || error.message.includes("quota")) {
-        return {
-          reply: `⚠️ **Free Quota Limit Reached**: Google enforces a free tier rate limit on \`gemini-3.6-flash\` (20 requests/day per key). Please retry in a few minutes or generate a new key at **[Google AI Studio](https://aistudio.google.com/app/apikey)**!`,
-          action: "NONE",
-        };
-      }
-
+    if (lastError?.status === 429 || lastError?.message?.includes("429") || lastError?.message?.includes("quota")) {
       return {
-        reply: `⚠️ **Gemini API Error**: ${error.message || "Unable to reach Gemini API"}\n\nPlease check your key status at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
+        reply: `⚠️ **Rate Limit Exceeded**: Google's free tier rate limit for Gemini Flash was reached. Please retry in a few minutes!`,
         action: "NONE",
       };
     }
+
+    return {
+      reply: `⚠️ **Gemini API Error**: ${lastError?.message || "Unable to reach Gemini API"}\n\nPlease check your key status at **[Google AI Studio](https://aistudio.google.com/app/apikey)**.`,
+      action: "NONE",
+    };
   }
 
   // Smart Fallback when GEMINI_API_KEY is not set yet
