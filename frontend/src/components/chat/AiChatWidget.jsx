@@ -111,10 +111,10 @@ const AiChatWidget = ({ friends = [], activeChatMessages = [], onRefreshFriends 
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 flex flex-col items-end">
       {/* Floating Window Overlay */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[380px] h-[520px] mb-4 bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="w-[92vw] sm:w-[380px] h-[460px] sm:h-[500px] max-h-[75vh] mb-3 bg-[#121722]/95 backdrop-blur-xl border border-[#232D42] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           
           {/* Header */}
           <div className="p-3.5 bg-[#171E2C] border-b border-[#232D42] flex items-center justify-between">
