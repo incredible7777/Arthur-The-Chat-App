@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/user.js";
 import chatMessageRoutes from "./routes/chatmssg.js";
 import adminRoutes from "./routes/admin.js";
+import aiRoutes from "./routes/ai.js";
 import { VerifySocketToken } from "./middlewares/verifytoken.js";
 import User from "./models/user.js";
 
@@ -36,6 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/message", chatMessageRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Root Health Check Endpoint
 app.get("/", (req, res) => {

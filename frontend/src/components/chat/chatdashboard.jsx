@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "./sidebar";
 import ChatArea from "./chatarea";
 import AddFriendModal from "./addfriendmodal";
 import ReportModal from "./ReportModal";
 import ProfileModal from "./ProfileModal";
+import AiChatWidget from "./AiChatWidget";
 import { useAuth } from "../../contexts/authcontext";
 import { getSocket } from "../../services/socketservice";
 import API from "../../services/api";
@@ -24,21 +25,22 @@ const ChatDashboard = () => {
   const [unreadCounts, setUnreadCounts] = useState({});
 
   // Fetch initial profile, friends, & unread message counts
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await API.get("/user/me");
-        setFriends(res.data.friends || []);
-        setFriendRequests(res.data.friendRequests?.filter((r) => r.status === "pending") || []);
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await API.get("/user/me");
+      setFriends(res.data.friends || []);
+      setFriendRequests(res.data.friendRequests?.filter((r) => r.status === "pending") || []);
 
-        const unreadRes = await API.get("/message/unread-counts");
-        setUnreadCounts(unreadRes.data || {});
-      } catch (err) {
-        console.error("Failed to load user data", err);
-      }
-    };
-    fetchData();
+      const unreadRes = await API.get("/message/unread-counts");
+      setUnreadCounts(unreadRes.data || {});
+    } catch (err) {
+      console.error("Failed to load user data", err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Listen to Socket.IO real-time events
   useEffect(() => {
@@ -383,6 +385,13 @@ const ChatDashboard = () => {
           onClose={() => setProfileModalData(null)}
         />
       )}
+
+      {/* Floating Bottom-Right AI Chatbot Widget 🤖 */}
+      <AiChatWidget
+        friends={friends}
+        activeChatMessages={messages}
+        onRefreshFriends={fetchData}
+      />
     </div>
   );
 };
