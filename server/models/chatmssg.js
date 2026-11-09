@@ -56,11 +56,11 @@ const chatMessageSchema = new mongoose.Schema(
     reactions: [reactionSchema],
     isDeleted: {
       type: Boolean,
-      default: false,
+      default: false, // Soft delete flag for Unsend
     },
     isRead: {
       type: Boolean,
-      default: false,
+      default: false, // Seen double-check
     },
     readAt: {
       type: Date,
