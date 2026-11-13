@@ -12,7 +12,7 @@ export const handleAiChat = async (req, res) => {
     if (!prompt) {
       return res.status(400).json({ message: "Prompt is required" });
     }
-
+    // Fetch user and populate their friends
     let currentUser = null;
     if (userId && userId !== "guest_user") {
       try {
@@ -21,7 +21,7 @@ export const handleAiChat = async (req, res) => {
         console.warn("User lookup warning:", e.message);
       }
     }
-
+    // Pass data into the AI Service
     const result = await processAiRequest({
       prompt,
       user: currentUser,
