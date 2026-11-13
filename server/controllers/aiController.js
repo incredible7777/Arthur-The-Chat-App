@@ -29,17 +29,21 @@ export const handleAiChat = async (req, res) => {
       activeChatMessages: activeChatMessages || [],
     });
 
-    // Handle automated backend action: REMOVE_FRIEND
+    // 1. Handle automated backend action: REMOVE_FRIEND
     if (result.action === "REMOVE_FRIEND" && result.targetUserId) {
+      // Remove target from current user's friends list
       await User.findByIdAndUpdate(userId, { $pull: { friends: result.targetUserId } });
+      // Remove current user from target's friends list
       await User.findByIdAndUpdate(result.targetUserId, { $pull: { friends: userId } });
+
       result.reply = `✅ Successfully removed **${result.targetUsername}** from your friends list!`;
+      // Return updated array so frontend can update state without a page reload
       result.updatedFriends = (friends || []).filter(
         (f) => String(f._id) !== String(result.targetUserId)
       );
     }
 
-    // Handle automated backend action: ADD_FRIEND
+    // 2. Handle automated backend action: ADD_FRIEND
     if (result.action === "ADD_FRIEND" && result.targetUsername) {
       const targetUser = await User.findOne({
         username: new RegExp(`^${result.targetUsername}$`, "i"),
