@@ -136,6 +136,7 @@ export const processAiRequest = async ({ prompt, user, friends = [], activeChatM
 
 /**
  * Helper to call Gemini API or return fallback reply if API key is not configured
+ * The Multi-Tier Gemini API Pipeline (queryGeminiOrFallback)
  */
 const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply }) => {
   const apiKey = process.env.GEMINI_API_KEY?.replace(/["'\r\n]/g, "").trim();
@@ -148,7 +149,7 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
     const modelsToTry = ["gemini-3.5-flash", "gemini-3.5-flash-lite"];
     let lastError = null;
 
-    // 1. Try SDK with gemini-3.5-flash
+    //// TIER 1: Official Google Generative AI SDK
     for (const modelName of modelsToTry) {
       try {
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -169,7 +170,7 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
       }
     }
 
-    // 2. Direct REST API Fallback for 100% guarantee
+   // TIER 2: Direct Raw HTTPS REST API Fallback
     for (const modelName of modelsToTry) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -192,6 +193,7 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
         console.error(`Gemini REST (${modelName}) Error:`, e.message);
       }
     }
+    // Handle Quota Exhaustion (HTTP 429) gracefully
 
     if (lastError?.status === 429 || lastError?.message?.includes("429") || lastError?.message?.includes("quota")) {
       return {
@@ -207,6 +209,7 @@ const queryGeminiOrFallback = async ({ prompt, systemInstruction, fallbackReply 
   }
 
   // Smart Fallback when GEMINI_API_KEY is not set yet
+  //  TIER 3: Local Rule-Based Fallback (If no API key provided)
   return {
     reply: fallbackReply || getFallbackAnswer(prompt),
     action: "NONE",
