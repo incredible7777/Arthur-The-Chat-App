@@ -30,7 +30,7 @@ export const processAiRequest = async ({ prompt, user, friends = [], activeChatM
     return {
       reply: `You currently have **${friends.length} friend${friends.length > 1 ? "s" : ""}** (${onlineCount} online):\n\n${friendListStr}`,
       action: "LIST_FRIENDS",
-      friendsData: friends,
+      friendsData: friends,// Passed back so frontend can render interactive cards!
     };
   }
 
