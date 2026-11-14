@@ -6,7 +6,7 @@ import User from "../models/user.js";
  */
 export const handleAiChat = async (req, res) => {
   try {
-    const { prompt, friends, activeChatMessages } = req.body;
+    const { prompt,  friends, activeChatMessages } = req.body;
     const userId = req.user?.userId || req.user?.id;
 
     if (!prompt) {
