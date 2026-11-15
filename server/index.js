@@ -54,18 +54,21 @@ const io = new Server(server, {
 
 // Verify JWT token for incoming socket connections
 io.use(VerifySocketToken);
-
-// Map to track connected online users: Key = userId (string), Value = Set of socket IDs
+//for solving multiple tabs problem 
+// A big phone-book (for real-time tracking): Map to track connected online users: Key = userId (string), Value = Set of socket IDs
 global.onlineUsers = new Map();
-
+// Main socket connection event
 io.on("connection", (socket) => {
   const userId = socket.user?.userId ? String(socket.user.userId) : null;
   console.log(`🔌 User connected to socket: ${userId} (Socket ID: ${socket.id})`);
 
   if (userId) {
+    // If this user opens a new tab, they appear as online in ALL tabs
+    // If Atulya is not in the phonebook yet, give him an empty Set 
     if (!onlineUsers.has(userId)) {
       onlineUsers.set(userId, new Set());
     }
+    // Add this specific tab's socket ID to Atulya's Set
     onlineUsers.get(userId).add(socket.id);
 
     // Update isOnline: true in MongoDB

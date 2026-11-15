@@ -25,16 +25,19 @@ export const VerifyToken = async (req, res, next) => {
  * Middleware to verify JWT token during Socket.IO connection handshake
 */
 export const VerifySocketToken = (socket, next) => {
+   // 1. Grab the secret token from the browser's connection request
   const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(" ")[1];
-
+  // 2. If no token was sent, reject the call immediately!
   if (!token) {
     return next(new Error("Authentication error: No socket token provided"));
   }
 
   try {
+    // 3. Decode the token using your secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
-    socket.user = decoded; // Attach user payload to socket instance
-    next();
+    // 4. Attach the user's details to this socket connection
+    socket.user = decoded; 
+    next(); // Pass! Let them in!
   } catch (error) {
     return next(new Error("Authentication error: Invalid or expired socket token"));
   }
