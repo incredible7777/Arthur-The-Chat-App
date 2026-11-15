@@ -116,7 +116,8 @@ io.on("connection", (socket) => {
       });
     }
 
-    // Broadcast to all sockets registered for receiverId
+    // Broadcast to all sockets registered for receiverId means
+    // Give Atulya's receiver the message in ALL his open tabs
     const receiverSockets = onlineUsers.get(String(receiverId));
     if (receiverSockets) {
       receiverSockets.forEach((sockId) => {
@@ -176,6 +177,7 @@ io.on("connection", (socket) => {
   socket.on("deleteMessage", ({ receiverId, messageId, chatRoomId }) => {
     const receiverSockets = onlineUsers.get(String(receiverId));
     if (receiverSockets) {
+      // Send notification to receiver's active tabs
       receiverSockets.forEach((sockId) => {
         io.to(sockId).emit("messageDeleted", { chatRoomId, messageId });
       });
@@ -185,6 +187,7 @@ io.on("connection", (socket) => {
   // Event: Pin / Unpin Message 📌
   socket.on("pinMessage", ({ receiverId, messageId, isPinned, chatRoomId }) => {
     const receiverSockets = onlineUsers.get(String(receiverId));
+    // Send notification to receiver's active tabs
     if (receiverSockets) {
       receiverSockets.forEach((sockId) => {
         io.to(sockId).emit("messagePinned", { chatRoomId, messageId, isPinned });
@@ -205,17 +208,19 @@ io.on("connection", (socket) => {
   // Event: Handle disconnect
   socket.on("disconnect", () => {
     console.log(`🔌 User disconnected: ${userId} (Socket ID: ${socket.id})`);
-
+    // 1. Remove this tab from the phone-book
     if (userId && onlineUsers.has(userId)) {
       const userSockets = onlineUsers.get(userId);
       userSockets.delete(socket.id);
+      // 2. Only if ALL tabs are closed (size === 0), mark offline
 
       if (userSockets.size === 0) {
         onlineUsers.delete(userId);
 
-        // Update isOnline: false in MongoDB
+         // Tell database: isOnline = false
         User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() }).then((user) => {
           if (user && user.friends) {
+            // Tell all of Atulya's friends that he just went offline
             user.friends.forEach((friendId) => {
               const friendSockets = onlineUsers.get(String(friendId));
               if (friendSockets) {
