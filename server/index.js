@@ -18,6 +18,7 @@ dotenv.config();
 
 // Initialize Express App & HTTP Server
 const app = express();
+// Initialize HTTP server for socket.io
 const server = http.createServer(app);
 
 // Increase JSON & URL-encoded payload size limit to 50MB to support base64 image uploads
